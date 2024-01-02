@@ -1,9 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"time"
 
+	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	appsinformers "k8s.io/client-go/informers/apps/v1"
 	"k8s.io/client-go/kubernetes"
@@ -48,11 +51,49 @@ func (con *controller) run(ch <-chan struct{}) {
 }
 
 func (con *controller) worker() {
-	/*
-		for con.processItem() {
+	// perform the controller task here ....
+	for con.controllerTask() {
 
-		}
-	*/
+	}
+
+}
+
+func (con *controller) controllerTask() bool {
+	// get the object and if not Q is empty , return false
+	item, shutdown := con.queue.Get()
+	if shutdown {
+		return false
+	}
+
+	key, err := cache.MetaNamespaceKeyFunc(item)
+	if err != nil {
+		fmt.Printf("failed getting key from cache %s\n", err.Error())
+	}
+
+	ns, name, err := cache.SplitMetaNamespaceKey(key)
+	if err != nil {
+		fmt.Printf("failed splitting key into name and namespace -  %s\n", err.Error())
+	}
+
+	err = con.syncDeployment(ns, name)
+	if err != nil {
+		fmt.Printf("failed to sync deployment - %s", err.Error())
+		return false
+	}
+	return true
+}
+
+func (con *controller) syncDeployment(ns, name string) error {
+	ctx := context.Background()
+
+	// creating service for the deployment
+	svc := corev1.Service{}
+	_, err := con.clientset.CoreV1().Services(ns).Create(ctx, &svc, metav1.CreateOptions{})
+	if err != nil {
+		fmt.Printf("error while creating service for the deployment %s\n", err.Error())
+	}
+
+	return nil
 }
 
 func (con *controller) handleAdd(obj interface{}) {
