@@ -86,7 +86,7 @@ func (con *controller) controllerTask() bool {
 func (con *controller) syncDeployment(ns, name string) error {
 	ctx := context.Background()
 
-	// creating service for the deployment
+	// creating service for the deployment..
 	svc := corev1.Service{}
 	_, err := con.clientset.CoreV1().Services(ns).Create(ctx, &svc, metav1.CreateOptions{})
 	if err != nil {
