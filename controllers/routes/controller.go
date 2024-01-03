@@ -7,6 +7,7 @@ import (
 
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/wait"
 	appsinformers "k8s.io/client-go/informers/apps/v1"
@@ -66,6 +67,9 @@ func (con *controller) controllerTask() bool {
 		return false
 	}
 
+	// do not process the same object again when once done...
+	defer con.queue.Forget(item)
+
 	key, err := cache.MetaNamespaceKeyFunc(item)
 	if err != nil {
 		fmt.Printf("failed getting key from cache %s\n", err.Error())
@@ -74,6 +78,20 @@ func (con *controller) controllerTask() bool {
 	ns, name, err := cache.SplitMetaNamespaceKey(key)
 	if err != nil {
 		fmt.Printf("failed splitting key into name and namespace -  %s\n", err.Error())
+	}
+
+	// check if the object has been deleted from k8s cluster
+	ctx := context.Background()
+	_, err = con.clientset.AppsV1().Deployments(ns).Get(ctx, name, metav1.GetOptions{})
+	if apierrors.IsNotFound(err) {
+		fmt.Printf("handle delete event for dep %s\n", name)
+		// delete service
+		err := con.clientset.CoreV1().Services(ns).Delete(ctx, name, metav1.DeleteOptions{})
+		if err != nil {
+			fmt.Printf("deleting service %s, error %s\n", name, err.Error())
+			return false
+		}
+		return true
 	}
 
 	err = con.syncDeployment(ns, name)
