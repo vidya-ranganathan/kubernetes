@@ -20,22 +20,20 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // PodSetSpec defines the desired state of PodSet
 type PodSetSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of PodSet. Edit podset_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// Replicas is the desired number of pods for the PodSet
+	// +kubebuilder:validation:Minimum=1
+	// +kubebuilder:validation:Maximum=10
+	Replicas int32 `json:"replicas,omitempty"`
 }
 
-// PodSetStatus defines the observed state of PodSet
+// PodSetStatus defines the current status of PodSet
 type PodSetStatus struct {
-	// INSERT ADDITIONAL STATUS FIELD - define observed state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
+	PodNames          []string `json:"podNames"`
+	AvailableReplicas int32    `json:"availableReplicas"`
 }
 
 //+kubebuilder:object:root=true
