@@ -17,15 +17,21 @@ limitations under the License.
 package controllers
 
 import (
-	"context"
-	"reflect"
+    "context"
+    "reflect"
 
-	"k8s.io/apimachinery/pkg/api/errors"
-	"k8s.io/apimachinery/pkg/labels"
-	"k8s.io/apimachinery/pkg/runtime"
-	ctrl "sigs.k8s.io/controller-runtime"
-	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+    "k8s.io/apimachinery/pkg/runtime"
+    ctrl "sigs.k8s.io/controller-runtime"
+    "sigs.k8s.io/controller-runtime/pkg/client"
+    ctrllog "sigs.k8s.io/controller-runtime/pkg/log"
+
+    appv1alpha1 "github.com/vidya-ranganathan/kubernetes/operators/scalepod/api/v1alpha1"
+    corev1 "k8s.io/api/core/v1"
+    metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+
+    "k8s.io/apimachinery/pkg/api/errors"
+    "k8s.io/apimachinery/pkg/labels"
+    "sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 )
 
 // ScalepodReconciler reconciles a Scalepod object
