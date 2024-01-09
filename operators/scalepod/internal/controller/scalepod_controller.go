@@ -14,17 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controller
+package controllers
 
 import (
-	"context"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	appv1alpha1 "github.com/vidya-ranganathan/kubernetes/operators/scalepod/api/v1alpha1"
 )
 
 // ScalepodReconciler reconciles a Scalepod object
@@ -39,24 +34,42 @@ type ScalepodReconciler struct {
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the Scalepod object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
+
+// Reconcile function to compare the state specified by the Scalepod object against the
+// actual cluster state, and then perform operations to make the cluster state reflect
+// the state specified by the user.
 //
-// For more details, check Reconcile and its Result here:
+// Reference..
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.15.0/pkg/reconcile
-func (r *ScalepodReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
 
-	// TODO(user): your logic here
-
-	return ctrl.Result{}, nil
+// Helper function : newPodForCR returns a busybox pod with the same name/namespace as the cr
+func newPodForCR(cr *appv1alpha1.scalepod) *corev1.Pod {
+	labels := map[string]string{
+		"app":     cr.Name,
+		"version": "v0.1",
+	}
+	return &corev1.Pod{
+		ObjectMeta: metav1.ObjectMeta{
+			GenerateName: cr.Name + "-pod",
+			Namespace:    cr.Namespace,
+			Labels:       labels,
+		},
+		Spec: corev1.PodSpec{
+			Containers: []corev1.Container{
+				{
+					Name:    "busybox",
+					Image:   "busybox",
+					Command: []string{"sleep", "3600"},
+				},
+			},
+		},
+	}
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *ScalepodReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *scalepodReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&appv1alpha1.Scalepod{}).
+		For(&appv1alpha1.scalepod{}).
+		Owns(&corev1.Pod{}).
 		Complete(r)
 }
